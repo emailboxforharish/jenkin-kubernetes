@@ -6,11 +6,22 @@ pipeline {
   }
   agent any
   stages {
-    stage('Cloning Git') {
-      steps {
-        git([url: 'https://github.com/emailboxforharish/jenkin-kubernetes.git', branch: 'master'])
-
-      }
+     stage('git repo & clean') {
+        steps {
+            bat "rmdir  /s /q jenkin-kubernetes"
+            bat "git clone https://github.com/emailboxforharish/jenkin-kubernetes.git"
+            bat "mvn clean -f jenkin-kubernetes"
+        }
+    }
+    stage('install') {
+        steps {
+            bat "mvn install -f jenkin-kubernetes"
+        }
+    }
+    stage('package') {
+        steps {
+            bat "mvn package -f jenkin-kubernetes"
+        }
     }
     stage('Building image') {
       steps{
