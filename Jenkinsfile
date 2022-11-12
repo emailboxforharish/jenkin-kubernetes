@@ -29,8 +29,8 @@ pipeline {
             steps{
                 script {
                   docker.withRegistry( '', registryCredential ) {
-                    dockerImage.push()
-                    // dockerImage.push('latest')
+                    dockerImage.push("spring-git-jenkin-docker-image")
+                     dockerImage.push('latest')
                   }
                 }
             }
