@@ -1,6 +1,6 @@
 pipeline {
     environment {
-        imagename = "spring-git-jenkin-docker"
+        imagename = "spring-git-jenkin-docker-image"
         registryCredential = 'dockerhub'
         dockerImage = ''
     }
