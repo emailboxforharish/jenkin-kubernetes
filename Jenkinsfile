@@ -1,36 +1,39 @@
 pipeline {
+    environment {
+        imagename = "spring-git-jenkin-docker"
+        registryCredential = 'dockerhub'
+        dockerImage = ''
+    }
     agent any
-    stages{
-        stage('Build Maven'){
-            steps{
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/emailboxforharish/jenkin-kubernetes']]])
-                sh 'mvn clean install'
+    stages {
+        stage('git repo & clean') {
+            steps {
+                bat "rmdir  /s /q jenkin-kubernetes"
+                bat "git clone https://github.com/emailboxforharish/jenkin-kubernetes.git"
+                bat "mvn clean -f jenkin-kubernetes"
             }
         }
-        stage('Build docker image'){
+        stage('install') {
+            steps {
+                bat "mvn install -f jenkin-kubernetes"
+            }
+        }
+        stage('Building image') {
             steps{
-                script{
-                    sh 'docker build -t emailboxforharish/spring-git-jenkin-docker .'
+                script {
+                  dockerImage = docker.build imagename
                 }
             }
         }
-        stage('Push image to Hub'){
+        stage('Deploy Image') {
             steps{
-                script{
-                   withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpwd')]) {
-                   sh 'docker login -u emailboxforharish -p ${dockerhubpwd}'
-
-}
-                   sh 'docker push emailboxforharish/spring-git-jenkin-docker'
+                script {
+                  docker.withRegistry( '', registryCredential ) {
+                    dockerImage.push("$BUILD_NUMBER")
+                     dockerImage.push('latest')
+                  }
                 }
             }
         }
-        /* stage('Deploy to k8s'){
-            steps{
-                script{
-                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
-                }
-            }
-        } */
     }
 }
