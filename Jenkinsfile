@@ -2,11 +2,11 @@ pipeline {
   environment {
     imagename = "jenkin-docker-image"
     registryCredential = 'dockerhub'
-    dockerImage = ''
+    dockerImage = 'spring-git-jenkin-docker.jar'
   }
   agent any
   stages {
-     stage('git repo & clean') {
+    stage('git repo & clean') {
         steps {
             bat "rmdir  /s /q jenkin-kubernetes"
             bat "git clone https://github.com/emailboxforharish/jenkin-kubernetes.git"
@@ -26,7 +26,7 @@ pipeline {
     stage('Building image') {
       steps{
         script {
-          dockerImage = docker.build imagename
+          dockerImage = imagename
         }
       }
     }
