@@ -1,52 +1,39 @@
 pipeline {
-  environment {
-    imagename = "jenkin-docker-image"
-    registryCredential = 'dockerhub'
-    dockerImage = 'spring-git-jenkin-docker.jar'
-  }
-  agent any
-  stages {
-    stage('git repo & clean') {
-        steps {
-            bat "rmdir  /s /q jenkin-kubernetes"
-            bat "git clone https://github.com/emailboxforharish/jenkin-kubernetes.git"
-            bat "mvn clean -f jenkin-kubernetes"
-        }
+    agent any
+    tools{
+        maven 'maven_3_5_0'
     }
-    stage('install') {
-        steps {
-            bat "mvn install -f jenkin-kubernetes"
+    stages{
+        stage('Build Maven'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/emailboxforharish/jenkin-kubernetes']]])
+                sh 'mvn clean install'
+            }
         }
-    }
-    stage('package') {
-        steps {
-            bat "mvn package -f jenkin-kubernetes"
+        stage('Build docker image'){
+            steps{
+                script{
+                    sh 'docker build -t emailboxforharish/spring-git-jenkin-docker .'
+                }
+            }
         }
-    }
-    stage('Building image') {
-      steps{
-        script {
-          dockerImage = imagename
-        }
-      }
-    }
-    stage('Deploy Image') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-            dockerImage.push("$BUILD_NUMBER")
-             dockerImage.push('latest')
+        stage('Push image to Hub'){
+            steps{
+                script{
+                   withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpwd')]) {
+                   sh 'docker login -u emailboxforharish -p ${dockerhubpwd}'
 
-          }
+}
+                   sh 'docker push emailboxforharish/spring-git-jenkin-docker'
+                }
+            }
         }
-      }
+        /* stage('Deploy to k8s'){
+            steps{
+                script{
+                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
+                }
+            }
+        } */
     }
-    stage('Remove Unused docker image') {
-      steps{
-        sh "docker rmi $imagename:$BUILD_NUMBER"
-         sh "docker rmi $imagename:latest"
-
-      }
-    }
-  }
 }
