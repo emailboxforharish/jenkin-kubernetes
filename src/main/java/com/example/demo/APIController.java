@@ -15,4 +15,9 @@ public class APIController {
     public ResponseEntity<Object> home(){
         return new ResponseEntity<>("Welcome Home Page!", HttpStatus.OK);
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<Object> health(){
+        return new ResponseEntity<>("Welcome health Page!", HttpStatus.OK);
+    }
 }
