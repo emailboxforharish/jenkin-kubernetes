@@ -41,7 +41,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
-        <finalName>jenkin-kubernetes</finalName>
+        <finalName>spring-git-jenkin-docker</finalName>
     </build>
 
 </project>
