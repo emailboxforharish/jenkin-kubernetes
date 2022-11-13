@@ -32,6 +32,14 @@ pipeline {
                 }
             }
         }
+        stage('Orchestrate')
+        {
+            steps{
+                script{
+                    bat 'kubectl apply -f deployment.yml'
+                }
+            }
+        }
         /* stage('Cleaning up') {
             steps{
                 sh "docker rmi $registry:$BUILD_NUMBER"
