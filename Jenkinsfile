@@ -11,35 +11,30 @@ pipeline {
                 bat "mvn clean -f jenkin-kubernetes"
             }
         }
-        stage('install') {
+       stage('Maven Install') {
+            agent {
+             	docker {
+               	image 'maven:3.5.0'
+               }
+             }
+             steps {
+             	sh 'mvn clean install'
+             }
+       }
+       stage('Docker Build') {
+            agent any
             steps {
-                bat "mvn install -f jenkin-kubernetes"
+             	sh 'docker build -t emailboxforharish/spring-docker-image:latest .'
             }
-        }
-        stage('Docker Build and Tag') {
+       }
+       stage('Docker Push') {
+            agent any
             steps {
-                sh 'docker build -t spring-git-jenkin-docker-image:latest .'
-                sh 'docker tag spring-git-jenkin-docker-image emailboxforharish/spring-git-jenkin-docker-image:latest'
-                sh 'docker tag spring-git-jenkin-docker-image emailboxforharish/spring-git-jenkin-docker-image:$BUILD_NUMBER'
-            }
-        }
-        stage('Publish image to Docker Hub') {
-            steps {
-                withDockerRegistry([ credentialsId: "dockerHub", url: "" ]) {
-                  sh  'docker push emailboxforharish/spring-git-jenkin-docker-image:latest'
-                  sh  'docker push emailboxforharish/spring-git-jenkin-docker-image:$BUILD_NUMBER'
-                }
-            }
-        }
-        stage('Run Docker container on Jenkins Agent') {
-            steps {
-                sh "docker run -d -p 4030:80 emailboxforharish/spring-git-jenkin-docker-image"
-            }
-        }
-        stage('Run Docker container on remote hosts') {
-            steps {
-                sh "docker -H ssh://jenkins@172.31.28.25 run -d -p 4001:80 emailboxforharish/spring-git-jenkin-docker-image"
-            }
-        }
+                withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+                    sh 'docker push emailboxforharish/spring-docker-image:latest'
+               }
+             }
+       }
     }
 }
