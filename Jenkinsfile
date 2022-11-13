@@ -11,22 +11,23 @@ pipeline {
                 bat "mvn clean -f jenkin-kubernetes"
             }
         }
-       stage('Maven Install') {
-            agent {
-             	docker {
-               	image 'maven:3.5.0'
-               }
-             }
-             steps {
-             	sh 'mvn clean install'
-             }
-       }
-       stage('Docker Build') {
+        stage('Docker Build') {
             agent any
             steps {
-             	sh 'docker build -t emailboxforharish/spring-docker-image:latest .'
+                sh 'docker build -t emailboxforharish/spring-docker-image:latest .'
+            }
+        }
+       stage('Maven Install') {
+            agent {
+                docker {
+               	    image 'maven:3.5.0'
+                }
+            }
+            steps {
+                sh 'mvn clean install'
             }
        }
+
        stage('Docker Push') {
             agent any
             steps {
