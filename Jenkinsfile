@@ -11,6 +11,11 @@ pipeline {
                 git 'https://github.com/emailboxforharish/jenkin-kubernetes.git'
             }
         }
+        stage('install') {
+            steps {
+                bat "mvn install"
+            }
+        }
         stage('Building our image') {
             steps{
                 script {
