@@ -1,8 +1,6 @@
 pipeline {
     environment {
-        imagename = "spring-git-jenkin-docker-image"
         registryCredential = 'dockerhub'
-        dockerImage = ''
     }
     agent any
     stages {
@@ -18,21 +16,29 @@ pipeline {
                 bat "mvn install -f jenkin-kubernetes"
             }
         }
-        stage('Building image') {
-            steps{
-                script {
-                  dockerImage = imagename
+        stage('Docker Build and Tag') {
+            steps {
+                sh 'docker build -t spring-git-jenkin-docker-image:latest .'
+                sh 'docker tag spring-git-jenkin-docker-image emailboxforharish/spring-git-jenkin-docker-image:latest'
+                sh 'docker tag spring-git-jenkin-docker-image emailboxforharish/spring-git-jenkin-docker-image:$BUILD_NUMBER'
+            }
+        }
+        stage('Publish image to Docker Hub') {
+            steps {
+                withDockerRegistry([ credentialsId: "dockerHub", url: "" ]) {
+                  sh  'docker push emailboxforharish/spring-git-jenkin-docker-image:latest'
+                  sh  'docker push emailboxforharish/spring-git-jenkin-docker-image:$BUILD_NUMBER'
                 }
             }
         }
-        stage('Deploy Image') {
-            steps{
-                script {
-                  docker.withRegistry( '', registryCredential ) {
-                    dockerImage.push("spring-git-jenkin-docker-image")
-                     dockerImage.push('latest')
-                  }
-                }
+        stage('Run Docker container on Jenkins Agent') {
+            steps {
+                sh "docker run -d -p 4030:80 emailboxforharish/spring-git-jenkin-docker-image"
+            }
+        }
+        stage('Run Docker container on remote hosts') {
+            steps {
+                sh "docker -H ssh://jenkins@172.31.28.25 run -d -p 4001:80 emailboxforharish/spring-git-jenkin-docker-image"
             }
         }
     }
